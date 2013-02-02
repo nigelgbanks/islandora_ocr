@@ -1,0 +1,6 @@
+name = Islandora OCR testing
+description = Tests Hooks. Do not enable.
+core = 7.x
+package = Testing
+hidden = TRUE
+dependencies[] = islandora_ocr
