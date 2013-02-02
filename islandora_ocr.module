@@ -10,7 +10,7 @@
  */
 function islandora_ocr_menu() {
   return array(
-    'admin/islandora/book' => array(
+    'admin/islandora/ocr' => array(
       'title' => 'OCR Tool',
       'description' => 'Configure OCR generation.',
       'page callback' => 'drupal_get_form',
