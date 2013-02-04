@@ -99,7 +99,8 @@ class HOCR {
     $this->doc->load($file);
     $this->xpath = new DOMXPath($this->doc);
     $this->xpath->registerNamespace("php", "http://php.net/xpath");
-    $this->xpath->registerPhpFunctions('mb_strtolower');
+    $this->xpath->registerPhpFunctions();
+    //    $this->xpath->registerPhpFunctions('mb_strtolower');
   }
 
   /**
@@ -117,9 +118,13 @@ class HOCR {
    * @return array
    *   The properties for each term and its respective classes.
    */
-  public function search($term, $classes = array('ocrx_word'), $options = array('case_sensitive' => FALSE)) {
-    $results = $this->find($term, $classes, $options);
-    return array_map(array($this, 'getProperties'), $results);
+  public function search($term, array $classes = array('ocrx_word'), array $options = array('case_sensitive' => FALSE)) {
+    $results = array();
+    $nodes = $this->find($term, $classes, $options);
+    foreach ($nodes as $node) {
+      $results[] = $this->getProperties($node);
+    }
+    return $results;
   }
 
   /**
@@ -139,13 +144,15 @@ class HOCR {
    *   All matching elements containing the given term and classes.
    */
   protected function find($term, array $classes, array $options) {
-    $text_query = $this->getTextQuery($term, $options);
+    $query = $this->getTextQuery($term, $options);
     if (!empty($classes)) {
       $classes = array_map(function($class) {return "@class = '{$class}'";}, $classes);
       $classes = implode(' or ', $classes);
-      return $this->xpath->query("$text_query/ancestor-or-self::node()['{$classes}']");
+      $query = "{$query}/ancestor-or-self::node()[{$classes}]";
+      debug($query);
+      return $this->xpath->query($query);
     }
-    return $this->xpath->query($text_query);
+    return $this->xpath->query($query);
   }
 
   /**

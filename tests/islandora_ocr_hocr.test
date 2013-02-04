@@ -48,12 +48,17 @@ class HOCRUnitTestCase extends DrupalWebTestCase {
       $file = drupal_realpath($file);
       $hocr = new HOCR($file);
       $this->pass('No exception thrown when vaild file parameter given.');
-      // Test Query.
-      $hocr->findWords($term);
-
     }
     catch(Exception $e) {
       $this->fail('Exception thrown when vaild file parameter given.');
     }
+    // Expecting count(//*[text()='the' or text()='The']) == 9
+    $results = $hocr->search('ThE');
+    $this->assertEqual(count($results), 9, 'Default search was Case-insensitive search for "ThE", returned the expected number of results');
+    $classes = array_filter($results, function($o){return $o['class'] != 'ocrx_word';});
+    $this->assertEqual(count($classes), 0, 'Default search only returned "ocrx_word" properties for "ThE".');
+    // Expecting count(//*[text()='the']) == 5
+    $results = $hocr->search('the', array('ocrx_word'), array('case_sensitive' => TRUE));
+    $this->assertEqual(count($results), 5, 'Case-sensitive search for "the", returned the expected number of results');
   }
 }
