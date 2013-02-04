@@ -72,7 +72,7 @@ class HOCR {
    * @return string
    *   The version if successful, FALSE otherwise.
    */
-  protected static function getVersion($file) {
+  public static function getVersion($file) {
     @$doc = simplexml_load_file($file);
     if ($doc) {
       $doc->registerXPathNamespace('ns', 'http://www.w3.org/1999/xhtml');

@@ -161,7 +161,7 @@ function islandora_ocr_create_hocr($image_file, array $options) {
     watchdog('islandora_ocr', $message, $variables, WATCHDOG_ERROR);
     return FALSE;
   }
-  if (!islandora_ocr_hocr_valid($out_file)) {
+  if (!HOCR::isValid($file)) {
     $message = 'tesseract failed to create valid hocr make sure to check your running a supported version of tesseract 3.2 or later.';
     $message .= '<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
     $variables = array(
@@ -173,41 +173,4 @@ function islandora_ocr_create_hocr($image_file, array $options) {
     return FALSE;
   }
   return $out_file;
-}
-
-/**
- * Checks if the given HOCR file is valid.
- *
- * At the moment this only checks if the version is supported but may do more
- * in the future.
- *
- * @param string $file
- *   The absolute path to the HOCR file.
- *
- * @return bool
- *   TRUE if the HOCR file is valid, FALSE otherwise.
- */
-function islandora_ocr_hocr_valid($file) {
-  $version = islandora_ocr_hocr_version($file);
-  return version_compare($version, TESSERACT_REQUIRED_VERSION) >= 0;
-}
-
-/**
- * Gets the version of the give HOCR file.
- *
- * Parses the meta tags in the given file to determine the version. Older
- * versions of tesseract don't include the version information.
- *
- * @param string $file
- *   The absolute path to the HOCR file.
- *
- * @return string
- *   The version if successful, FALSE otherwise.
- */
-function islandora_ocr_hocr_version($file) {
-  @$doc = simplexml_load_file($file);
-  $doc->registerXPathNamespace('ns', 'http://www.w3.org/1999/xhtml');
-  $version = (string) array_pop($doc->xpath('/ns:html/ns:head/ns:meta[@name="ocr-system"]/@content'));
-  $version = str_replace(array('tesseract', ' '), '', $version);
-  return empty($version) ? FALSE : $version;
 }
