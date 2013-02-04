@@ -1,0 +1,55 @@
+<?php
+
+/**
+ * @file
+ * Unit test for the HOCR class.
+ */
+
+class HOCRUnitTestCase extends DrupalUnitTestCase {
+
+  /**
+   * Gets info to display to describe this test.
+   *
+   * @see DrupalUnitTestCase::getInfo()
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'HOCR class Unit Tests',
+      'description' => 'Ensure that HOCR parsing works.',
+      'group' => 'Islandora',
+    );
+  }
+
+  /**
+   * Sets up the requirements for this test.
+   *
+   * @see DrupalUnitTestCase::setUp()
+   */
+  public function setUp() {
+    parent::setUp('islandora_ocr');
+  }
+
+  /**
+   * Test finding word coordinates and information.
+   */
+  public function testHOCR() {
+    // Test invalid arguments throw exceptions.
+    try {
+      $hocr = new HOCR();
+      $this->fail('InvalidArgumentException was not thrown when no parameter given.');
+    } catch(InvalidArgumentException $e) {
+      $this->pass('InvalidArgumentException thrown when no parameter given.');
+    }
+    try {
+      $file = drupal_get_path('module', 'islandora_ocr') . '/tests/fixtures/test.tif';
+      $hocr = new HOCR();
+      $this->fail('InvalidArgumentException was not thrown when invalid file parameter given.');
+    } catch(InvalidArgumentException $e) {
+      $this->pass('InvalidArgumentException thrown when invalid file parameter given.');
+    }
+    // Blah!
+    $file = drupal_get_path('module', 'islandora_ocr') . '/tests/fixtures/test.tif.html';
+    $file = drupal_realpath($file);
+    $hocr = new HOCR($file);
+  }
+}

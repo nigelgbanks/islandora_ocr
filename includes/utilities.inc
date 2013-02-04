@@ -5,9 +5,6 @@
  * This file contains helper functions used throughout this module.
  */
 
-// Constants.
-define('TESSERACT_REQUIRED_VERSION', '3.02');
-
 /**
  * Checks if it is possible to create files with tesseract.
  *

@@ -5,6 +5,9 @@
  * Defines all the hooks this module implements.
  */
 
+// Constants.
+define('TESSERACT_REQUIRED_VERSION', '3.02');
+
 /**
  * Implements hook_menu().
  */
