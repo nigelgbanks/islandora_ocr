@@ -1,0 +1,64 @@
+<?php
+
+/**
+ * @file
+ * Unit test for the HOCR class.
+ */
+
+class HOCRUnitTestCase extends DrupalWebTestCase {
+
+  /**
+   * Gets info to display to describe this test.
+   *
+   * @see DrupalUnitTestCase::getInfo()
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'HOCR class Unit Tests',
+      'description' => 'Ensure that HOCR parsing works.',
+      'group' => 'Islandora',
+    );
+  }
+
+  /**
+   * Sets up the requirements for this test.
+   *
+   * @see DrupalUnitTestCase::setUp()
+   */
+  public function setUp() {
+    parent::setUp('islandora_ocr');
+  }
+
+  /**
+   * Test finding word coordinates and information.
+   */
+  public function testHOCR() {
+    // Test invalid arguments throw exceptions.
+    try {
+      $file = drupal_get_path('module', 'islandora_ocr') . '/tests/fixtures/test.tif';
+      $hocr = new HOCR($file);
+      $this->fail('InvalidArgumentException was not thrown when invalid file parameter given.');
+    }
+    catch(InvalidArgumentException $e) {
+      $this->pass('InvalidArgumentException thrown when invalid file parameter given.');
+    }
+    // Test correct arguments do not throw.
+    try {
+      $file = drupal_get_path('module', 'islandora_ocr') . '/tests/fixtures/test.tif.html';
+      $file = drupal_realpath($file);
+      $hocr = new HOCR($file);
+      $this->pass('No exception thrown when vaild file parameter given.');
+    }
+    catch(Exception $e) {
+      $this->fail('Exception thrown when vaild file parameter given.');
+    }
+    // Expecting count(//*[text()='the' or text()='The']) == 9
+    $results = $hocr->search('ThE');
+    $this->assertEqual(count($results), 9, 'Default search was Case-insensitive search for "ThE", returned the expected number of results');
+    $classes = array_filter($results, function($o){return $o['class'] != 'ocrx_word';});
+    $this->assertEqual(count($classes), 0, 'Default search only returned "ocrx_word" properties for "ThE".');
+    // Expecting count(//*[text()='the']) == 5
+    $results = $hocr->search('the', array('ocrx_word'), array('case_sensitive' => TRUE));
+    $this->assertEqual(count($results), 5, 'Case-sensitive search for "the", returned the expected number of results');
+  }
+}

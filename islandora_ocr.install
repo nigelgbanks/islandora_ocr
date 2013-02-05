@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for this module.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * @see islandora_ocr_islandora_required_objects()
+ */
+function islandora_ocr_install() {
+  module_load_include('inc', 'islandora_ocr', 'includes/utilities');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function islandora_ocr_uninstall() {
+}
