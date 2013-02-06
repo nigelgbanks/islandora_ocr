@@ -161,7 +161,7 @@ function islandora_ocr_create_hocr($image_file, array $options) {
     watchdog('islandora_ocr', $message, $variables, WATCHDOG_ERROR);
     return FALSE;
   }
-  if (!HOCR::isValid($file)) {
+  if (!HOCR::isValid($out_file)) {
     $message = 'tesseract failed to create valid hocr make sure to check your running a supported version of tesseract 3.2 or later.';
     $message .= '<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
     $variables = array(
