@@ -76,7 +76,8 @@ class HOCR {
     @$doc = simplexml_load_file($file);
     if ($doc) {
       $doc->registerXPathNamespace('ns', 'http://www.w3.org/1999/xhtml');
-      $version = (string) array_pop($doc->xpath('/ns:html/ns:head/ns:meta[@name="ocr-system"]/@content'));
+      $content_attributes = $doc->xpath('/ns:html/ns:head/ns:meta[@name="ocr-system"]/@content');
+      $version = (string)reset($content_attributes);
       $version = str_replace(array('tesseract', ' '), '', $version);
       return empty($version) ? FALSE : $version;
     }
