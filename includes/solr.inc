@@ -25,6 +25,9 @@ function islandora_ocr_highlighted_solr_search($query, $offset = 0, $limit = -1,
     return array();
   }
   $limit = $limit != -1 ? $limit : variable_get('islandora_ocr_solr_hocr_result_count', 32);
+  // Remove any fields that have no values specified so the defaults can be
+  // applied.
+  $params = array_filter($params);
   $params += array(
     'hl' => 'true',
     'qt' => variable_get('islandora_solr_request_handler', 'standard'),
