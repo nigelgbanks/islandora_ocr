@@ -232,7 +232,10 @@ class HOCR {
     $matches = array();
     if (preg_match_all($regex_pattern, $solr_highlighted_field, $matches)) {
       foreach ($matches[0] as $index => $match) {
-        $terms[] = $this->solrMapHighlightedFieldRegexMatchToTerm($matches, $index);
+        $term = $this->solrMapHighlightedFieldRegexMatchToTerm($matches, $index);
+        // String HOCR terms treat whitespace as delimiters.
+        $tokens = preg_split('/\s+/', $term);
+        $terms = array_merge($terms, $tokens);
       }
     }
     return $terms;
@@ -301,12 +304,15 @@ class HOCR {
    */
   protected function findTermNodes(array $terms, array $options) {
     $terms = $this->getTermQueryPredicate($terms, $options);
-    $query = "//*[{$terms}]";
-    if (!empty($options['classes'])) {
-      $classes = $this->getClassQueryPredicate($options['classes']);
-      $query .= "/ancestor-or-self::node()[{$classes}]";
+    if (!empty($terms)) {
+      $query = "//*[{$terms}]";
+      if (!empty($options['classes'])) {
+        $classes = $this->getClassQueryPredicate($options['classes']);
+        $query .= "/ancestor-or-self::node()[{$classes}]";
+      }
+      return $this->xpath->query($query);
     }
-    return $this->xpath->query($query);
+    return array();
   }
 
   /**

@@ -20,7 +20,7 @@
  * @return object
  *   The Solr results; deserialized JSON.
  */
-function islandora_ocr_highlighted_solr_search($query, $offset = 0, $limit = -1, array $params = array()) {
+function islandora_ocr_highlighted_solr_search($query, $offset = 0, $limit = -1, array &$params = array()) {
   if (!module_exists('islandora_solr')) {
     return array();
   }
