@@ -147,6 +147,8 @@ class HOCR {
    *     'ocrx_word'.
    *   - solr: The solr parameters from the solr query that generated the term.
    *     these will be used to parse the given terms.
+   *   - match_exact_phrase: Only match the given terms if they occur in the
+   *     same order.
    *
    * @return array
    *   The properties for each term and its respective classes.
@@ -154,7 +156,8 @@ class HOCR {
   public function search($terms, array $options = array()) {
     $options += array(
       'classes' => array('ocrx_word'),
-      'case_sensitive' => FALSE,
+      'case_sensitive' => TRUE,
+      'match_exact_phrase' => TRUE,
     );
     $terms = $this->preprocessSearchTerms($terms, $options);
     $nodes = $this->findTermNodes($terms, $options);
@@ -303,14 +306,16 @@ class HOCR {
    *   All matching elements containing the given term and classes.
    */
   protected function findTermNodes(array $terms, array $options) {
-    $terms = $this->getTermQueryPredicate($terms, $options);
     if (!empty($terms)) {
-      $query = "//*[{$terms}]";
-      if (!empty($options['classes'])) {
-        $classes = $this->getClassQueryPredicate($options['classes']);
-        $query .= "/ancestor-or-self::node()[{$classes}]";
+      $term_predicate = $this->getTermQueryPredicate($terms, $options);
+      if (!empty($term_predicate)) {
+        $query = "//*$term_predicate";
+        if (!empty($options['classes'])) {
+          $class_predicate = $this->getClassQueryPredicate($options['classes']);
+          $query .= "/ancestor-or-self::node(){$class_predicate}";
+        }
+        return $this->xpath->query($query);
       }
-      return $this->xpath->query($query);
     }
     return array();
   }
@@ -326,24 +331,97 @@ class HOCR {
    *   - classes: The classes of elements to return, expecting one or more  of
    *     the following: 'ocr_page', 'ocr_carea', 'ocr_par', 'ocr_line',
    *     'ocrx_word'.
-   *   - solr: The solr parameters from the solr query that generated the term.
-   *     these will be used to parse the given terms.
    *
    * @return string
    *   A XPath predicate that limits the query by the given terms.
    */
   protected function getTermQueryPredicate(array $terms, array $options) {
-    $map_case_sensitive_terms = function($term) {
-      return "text() = '{$term}'";
-    };
-    $map_case_insensitive_terms = function($term) {
-      $term = mb_strtolower($term);
-      return "php:functionString('mb_strtolower', text()) = '{$term}'";
-    };
+    if (isset($options['match_exact_phrase']) && $options['match_exact_phrase']) {
+      return $this->getTermPhraseQueryPredicate($terms, $options);
+    }
+    else {
+      $get_term_predicate = $this->getMatchTermExpressionFunction($options);
+      $terms = array_map(array($this, $get_term_predicate), $terms);
+      $predicate = implode(' or ', $terms);
+      return "[$predicate]";
+    }
+  }
+
+  /**
+   * Generates a phrase matching predicates that will only match nodes.
+   *
+   * Takes the form of:
+   * [text() = 'term_1' and following::*[1..n][text() = 'term_2..n']]/preceding::node()[1]/following::[position() <= n]
+   *
+   * @param array $terms
+   *   The phrase, assumed to be in order phrase.
+   * @param array $options
+   *   Options to modify the text selection of the search:
+   *   - case_sensitive: Defaults to FALSE.
+   *
+   * @return string
+   *   The predicate that will match the given phrase.
+   */
+  protected function getTermPhraseQueryPredicate(array $terms, array $options) {
+    $phrase_predicate = array();
+    $get_term_predicate = $this->getMatchTermExpressionFunction($options);
+    foreach ($terms as $i => $term) {
+      $term = $this->{$get_term_predicate}($term, 'self::node()');
+      $phrase_predicate[] = "following::text()[normalize-space(self::node())][$i][{$term}]";
+    }
+    // The first predicate acts as an anchor, which selects the first node
+    // in the given phrase if all other terms in the phrase follow it in
+    // the correct order.
+    $phrase_predicate[0] = $this->{$get_term_predicate}($terms[0]);
+    $phrase_predicate = implode(' and ', $phrase_predicate);
+    $count = count($terms);
+    $predicate = "[{$phrase_predicate}]";
+    if ($count > 1) {
+      $predicate .= "/preceding::node()[1]/following::text()[normalize-space(self::node())][position() <= {$count}]";
+    }
+    return $predicate;
+  }
+
+  /**
+   * Get the term predicate function based on the search options.
+   *
+   * @param array $options
+   *   Options to modify the text selection of the search:
+   *   - case_sensitive: Defaults to FALSE.
+   *
+   * @return string
+   *   The member function to use for creating term predicates.
+   */
+  protected function getMatchTermExpressionFunction(array $options) {
     $case_sensitive = isset($options['case_sensitive']) && $options['case_sensitive'];
-    $map_terms = $case_sensitive ? $map_case_sensitive_terms : $map_case_insensitive_terms;
-    $terms = array_map($map_terms, $terms);
-    return implode(' or ', $terms);
+    return $case_sensitive ? 'getCaseSensitiveMatchTermExpression' : 'getCaseInsensitiveMatchTermExpression';
+  }
+
+  /**
+   * Generates a XPath predicate that matches the given term exactly.
+   *
+   * @param string $term
+   *   The term to match.
+   *
+   * @return string
+   *   The XPath predicate to match the given term exactly.
+   */
+  protected function getCaseSensitiveMatchTermExpression($term, $node = 'text()') {
+    return "$node = '{$term}'";
+  }
+
+  /**
+   * Generates a XPath predicate performs a case-insensitive match.
+   *
+   * @param string $term
+   *   The term to match.
+   *
+   * @return string
+   *   The XPath predicate to do a case-insensitive match on the given term.
+   */
+  protected function getCaseInsensitiveMatchTermExpression($term, $node = 'text()') {
+    $term = mb_strtolower($term);
+    return "php:functionString('mb_strtolower', $node) = '{$term}'";
   }
 
   /**
@@ -355,8 +433,8 @@ class HOCR {
    *   If no classes are given all nodes are returned.
    */
   protected function findClassNodes($classes) {
-    $classes = $this->getClassQueryPredicate($classes);
-    return $this->xpath->query("//node()[{$classes}]");
+    $class_predicate = $this->getClassQueryPredicate($classes);
+    return $this->xpath->query("//node(){$class_predicate}");
   }
 
   /**
@@ -373,7 +451,8 @@ class HOCR {
   protected function getClassQueryPredicate($classes) {
     $classes = is_array($classes) ? $classes : array($classes);
     $classes = array_map(function($class) {return "@class = '{$class}'";}, $classes);
-    return implode(' or ', $classes);
+    $predicate = implode(' or ', $classes);
+    return "[$predicate]";
   }
 
   /**
