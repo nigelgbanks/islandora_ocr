@@ -31,42 +31,24 @@
         <include name="**/*.test" />
         <modified />
       </fileset>
-
-      <fileset dir="${basedir}/includes">
-        <include name="**/*.php" />
-        <include name="**/*.inc" />
-        <include name="**/*.module" />
-        <include name="**/*.install" />
-        <include name="**/*.test" />
-        <modified />
-      </fileset>
-
-      <fileset dir="${basedir}/tests">
-        <include name="**/*.php" />
-        <include name="**/*.inc" />
-        <include name="**/*.module" />
-        <include name="**/*.install" />
-        <include name="**/*.test" />
-        <modified />
-      </fileset>
     </apply>
   </target>
 
   <target name="phploc" description="Measure project size using PHPLOC">
     <exec executable="phploc">
-      <arg line="--log-csv ${basedir}/build/logs/phploc.csv --exclude build --names *.php,*.module,*.inc,*.test ${basedir}" />
+      <arg line="--log-csv ${basedir}/build/logs/phploc.csv --exclude build --names *.php,*.module,*.inc,*.test,*.install ${basedir}" />
     </exec>
   </target>
 
   <target name="code_sniff" description="Checks the code for Drupal coding standard violations" >
     <exec executable="phpcs">
-        <arg line="--standard=Drupal --report=checkstyle --report-file=${basedir}/build/logs/checkstyle.xml --extensions=php,inc,test,module,install --ignore=build/ ${basedir} ${basedir}/includes ${basedir}/tests" />
+        <arg line="--standard=Drupal --report=checkstyle --report-file=${basedir}/build/logs/checkstyle.xml --extensions=php,inc,test,module,install --ignore=build/ ${basedir}" />
     </exec>
   </target>
 
   <target name="phpcpd" description="Copy/Paste code detection">
     <exec executable="phpcpd">
-      <arg line="--log-pmd ${basedir}/build/logs/pmd-cpd.xml --exclude build --names *.php,*.module,*.inc,*.test ${basedir}" />
+      <arg line="--log-pmd ${basedir}/build/logs/pmd-cpd.xml --exclude build --names *.php,*.module,*.inc,*.test,*.install ${basedir}" />
     </exec>
   </target>
 
@@ -77,8 +59,8 @@
   </target>
 
   <target name="doxygen" description="Generate API documentation with doxygen" depends="prepare">
-    <exec executable="sed">
-      <arg line='-i "s|PROJECT_NUMBER         =|PROJECT_NUMBER         = ""`git log -1 --pretty=format:%h`""|" build/Doxyfile'/>
+    <exec executable="bash">
+        <arg line='-c "sed -i s/PROJECT_NUMBER\ \ \ \ \ \ \ \ \ =/PROJECT_NUMBER\ \ \ \ \ \ \ \ \ =\ `git log -1 --pretty=format:%h`/ build/Doxyfile"'/>
     </exec>
     <exec executable="doxygen">
       <arg line="${basedir}/build/Doxyfile" />
