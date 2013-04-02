@@ -62,10 +62,10 @@ class HOCRUnitTestCase extends DrupalWebTestCase {
     $this->assertEqual(count($results), 5, 'Case-sensitive search for "the" returned the expected number of results');
     // Get the unknown page dimensions returns false.
     $dimensions = $hocr->getPageDimensions(1);
-    $this->assertFalse($dimensions, 'Get page dimensions returned FALSE for unknown page.');
+    $this->assertFalse($dimensions, 'Get page dimensions returned FALSE for unknown page');
     // Get the page dimensions.
     $dimensions = $hocr->getPageDimensions();
-    $this->assertEqual($dimensions, array('width' => 640, 'height' => 480), 'Get page dimensions returned correct value.');
+    $this->assertEqual($dimensions, array('width' => 640, 'height' => 480), 'Get page dimensions returned correct value');
     // Test Phrase matching.
     $results = $hocr->search('test the', array(
                  'case_sensitive' => TRUE,
