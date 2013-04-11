@@ -18,5 +18,5 @@ before_install:
 script:
   - ant -buildfile sites/all/modules/islandora_ocr/build.xml lint
   - drush dcs sites/all/modules/islandora_ocr
-  - phpcpd sites/all/modules/islandora_ocr
+  - phpcpd --names *.module,*.inc,*.test sites/all/modules/islandora_ocr
   - drush test-run --uri=http://localhost:8081 "Islandora OCR"
