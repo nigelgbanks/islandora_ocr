@@ -579,9 +579,9 @@ class HOCR {
   public static function stripDoctypeFromFile($filename) {
     $file = fopen($filename, 'r+');
     if ($file) {
-      $stripped_content = self::stripDoctype(fread($file, filesize($filename)))
+      $stripped_content = self::stripDoctype(fread($file, filesize($filename)));
       fseek($file, 0);
-      ftruncate($file);
+      ftruncate($file, 0);
       fwrite($file, $stripped_content);
       fclose($file);
     }
