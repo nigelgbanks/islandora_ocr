@@ -562,13 +562,10 @@ class HOCR {
    * just to wipe it.
    */
   public static function stripDoctype($hocr_string) {
-    // Seems arbitrary, but this is what is hard-coded in tesseract (see the
-    // link in this method's doc-comment.
-    $doctype = '
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
+    // Wipe out the HTML DOCTYPE definition.
+    $doctype_regex = '/<!DOCTYPE\s+html.*?>\s+/si';
 
-    return str_replace($doctype, '', $hocr_string);
+    return preg_replace($doctype_regex, '', $hocr_string);
   }
 
   /**
