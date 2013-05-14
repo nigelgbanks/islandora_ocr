@@ -70,12 +70,6 @@ function islandora_ocr_highlighted_solr_search($query, $offset = 0, $limit = -1,
  *   highlighted search results:
  */
 function islandora_ocr_map_highlighted_solr_results_to_bounding_boxes($solr_results, $ignore_duplicate_snippets_results = TRUE) {
-  if (module_exists('islandora_paged_content')) {
-    // "Optional" integration, necessary to find results without HOCR in
-    // IABookreader.
-    module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
-  }
-
   $results = array();
   $hocr_search_params = array(
     'solr' => $solr_results['responseHeader']['params'],
@@ -94,13 +88,8 @@ function islandora_ocr_map_highlighted_solr_results_to_bounding_boxes($solr_resu
       }
       else {
         $results[$pid] = array();
-        if (function_exists('islandora_paged_content_get_page_dimensions')) {
-          // Try to get dimensions.
-          $results[$pid] += array(
-            'page' => islandora_paged_content_get_page_dimensions($object),
-          );
-        }
         foreach ($highlighted_fields as $highlighted_field) {
+
           foreach ($highlighted_field as $snippet) {
             $results[$pid]['snippets'][$snippet] = array();
           }
