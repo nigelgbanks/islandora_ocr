@@ -58,7 +58,7 @@ class HOCR {
   public static function isValid($file) {
     if (file_exists($file)) {
       $version = self::getVersion($file);
-      return version_compare($version, TESSERACT_REQUIRED_VERSION) >= 0;
+      return version_compare($version, ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION) >= 0;
     }
     return FALSE;
   }
