@@ -451,7 +451,10 @@ class HOCR {
    */
   protected function getClassQueryPredicate($classes) {
     $classes = is_array($classes) ? $classes : array($classes);
-    $classes = array_map(function($class) {return "@class = '{$class}'";}, $classes);
+    $map = function($class) {
+      return "@class = '{$class}'";
+    };
+    $classes = array_map($map, $classes);
     $predicate = implode(' or ', $classes);
     return "[$predicate]";
   }
