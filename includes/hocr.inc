@@ -27,13 +27,13 @@ class HOCR {
   /**
    * Instantiates an HOCR object from the given datastream.
    *
-   * @param AbstractFedoraDatastream $datastream
+   * @param AbstractDatastream $datastream
    *   The datastream containing the HOCR file.
    *
    * @return HOCR
    *   An object of this class build from the given datastream.
    */
-  public static function fromDatastream(AbstractFedoraDatastream $datastream) {
+  public static function fromDatastream(AbstractDatastream $datastream) {
     $mime_detect = new MimeDetect();
     $ext = $mime_detect->getExtension($datastream->mimeType);
     $file = file_create_filename("{$datastream->parent->id}_{$datastream->id}.{$ext}", 'temporary://');
@@ -58,7 +58,7 @@ class HOCR {
   public static function isValid($file) {
     if (file_exists($file)) {
       $version = self::getVersion($file);
-      return version_compare($version, TESSERACT_REQUIRED_VERSION) >= 0;
+      return version_compare($version, ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION) >= 0;
     }
     return FALSE;
   }
@@ -351,7 +351,8 @@ class HOCR {
    * Generates a phrase matching predicates that will only match nodes.
    *
    * Takes the form of:
-   * [text() = 'term_1' and following::*[1..n][text() = 'term_2..n']]/preceding::node()[1]/following::[position() <= n]
+   * [text() = 'term_1' and following::*[1..n][text() = 
+   * 'term_2..n']]/preceding::node()[1]/following::[position() <= n]
    *
    * @param array $terms
    *   The phrase, assumed to be in order phrase.
@@ -450,7 +451,10 @@ class HOCR {
    */
   protected function getClassQueryPredicate($classes) {
     $classes = is_array($classes) ? $classes : array($classes);
-    $classes = array_map(function($class) {return "@class = '{$class}'";}, $classes);
+    $map = function($class) {
+      return "@class = '{$class}'";
+    };
+    $classes = array_map($map, $classes);
     $predicate = implode(' or ', $classes);
     return "[$predicate]";
   }
@@ -544,5 +548,43 @@ class HOCR {
       $height = $bbox['bottom'] - $bbox['top'];
     }
     return array('width' => $width, 'height' => $height);
+  }
+
+  /**
+   * Strip the DOCTYPE declaration from the related HOCR.
+   *
+   * Fedora GSearch (or Java in general) does not handle (XML) entity
+   * resolution gracefully by default (tries to hit w3.org to retrieve DTDs)...
+   * Ideally, a functional entity resolver could be made to be used on the Java
+   * side; however, this seems like it would necessitate setting up the parser
+   * in a different way, which seems like a non-trivial change in GSearch.
+   * Alternatively, it seems like there should be a flag to change the HOCR
+   * tesseract outputs; however, reviewing the
+   * @link http://code.google.com/p/tesseract-ocr/source/browse/trunk/api/baseapi.cpp#830 source code @endlink
+   * reveals that it is highly unlikely that such a flag exists. Seems simpler
+   * just to wipe it.
+   */
+  public static function stripDoctype($hocr_string) {
+    // Wipe out the HTML DOCTYPE definition.
+    $doctype_regex = '/<!DOCTYPE\s+html.*?>\s+/si';
+
+    return preg_replace($doctype_regex, '', $hocr_string);
+  }
+
+  /**
+   * Strip the DOCTYPE declaration from a file containing HOCR.
+   *
+   * @see HOCR::stripDoctype()
+   */
+  public static function stripDoctypeFromFile($filename) {
+    $filename = drupal_realpath($filename);
+    $file = fopen($filename, 'r+');
+    if ($file) {
+      $stripped_content = self::stripDoctype(fread($file, filesize($filename)));
+      fseek($file, 0);
+      ftruncate($file, 0);
+      fwrite($file, $stripped_content);
+      fclose($file);
+    }
   }
 }

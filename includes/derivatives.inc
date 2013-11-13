@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * File to create derivatives with teseract
+ */
 
 /**
  * Generates a plain text OCR file, using the given options.
@@ -61,6 +65,7 @@ function islandora_ocr_create_hocr($image_file, array $options) {
     watchdog('islandora_ocr', $message, $variables, WATCHDOG_ERROR);
     return FALSE;
   }
+
   if (!HOCR::isValid($out_file)) {
     $message = 'Tesseract failed to create a valid HOCR datastream. Please ensure you are running a supported version of Tesseract (3.02.02 or later).';
     $message .= '<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
@@ -72,19 +77,22 @@ function islandora_ocr_create_hocr($image_file, array $options) {
     watchdog('islandora_ocr', $message, $variables, WATCHDOG_ERROR);
     return FALSE;
   }
+
+  HOCR::stripDoctypeFromFile($out_file);
+
   return $out_file;
 }
 
 /**
  * Fetches the upload image file from Fedora, and saves it to a temp location.
  *
- * @param FedoraDatastream $datastream
- *  The object to fetch the uploaded image file from.
+ * @param AbstractDatastream $datastream
+ *   The object to fetch the uploaded image file from.
  *
  * @return string
  *   The file path to the temp file if successful, FALSE otherwise.
  */
-function islandora_ocr_get_uploaded_file(FedoraDatastream $datastream) {
+function islandora_ocr_get_uploaded_file(AbstractDatastream $datastream) {
   $mime_detector = new MimeDetect();
   $ext = $mime_detector->getExtension($datastream->mimeType);
   $filename = file_create_filename(str_replace(':', '_', "{$datastream->parent->id}_{$datastream->id}.{$ext}"), 'temporary://');
@@ -95,7 +103,7 @@ function islandora_ocr_get_uploaded_file(FedoraDatastream $datastream) {
 /**
  * Creates and adds the OCR, HOCR datastreams.
  *
- * @param FedoraDatastream $object
+ * @param AbstractDatastream $datastream
  *   The page datastream that the derivatives will be generated for.
  * @param array $options
  *   The options for tesseract.
@@ -103,15 +111,15 @@ function islandora_ocr_get_uploaded_file(FedoraDatastream $datastream) {
  * @return bool
  *   TRUE on success, FALSE otherwise.
  */
-function islandora_ocr_derive_datastreams(FedoraDatastream $datastream, array $options) {
+function islandora_ocr_derive_datastreams(AbstractDatastream $datastream, array $options) {
   module_load_include('inc', 'islandora_ocr', 'includes/utilities');
   $options += array(
     'language' => 'eng',
   );
   $source_file = islandora_ocr_get_uploaded_file($datastream);
 
-  // Check the depth of the image, to see if it can be processed with Tesseract...
-  // If it can not, reduce the depth and grayscale it...
+  // Check the depth of the image, to see if it can be processed with
+  // tesseract. If it can not, reduce the depth and grayscale it.
   $identify = islandora_ocr_get_identify();
 
   $file = drupal_realpath($source_file);
@@ -154,6 +162,151 @@ function islandora_ocr_derive_datastreams(FedoraDatastream $datastream, array $o
 }
 
 /**
+ * Get an OCRable version of the given image datastream.
+ *
+ * @param AbstractDatastream $datastream
+ *   An image datastream we want to OCR.
+ *
+ * @return string
+ *   A path to the converted image... Delete it after you're done.
+ */
+function islandora_ocr_get_converted_source(AbstractDatastream $datastream) {
+  module_load_include('inc', 'islandora_ocr', 'includes/utilities');
+  $source_file = islandora_ocr_get_uploaded_file($datastream);
+
+  // Check the depth of the image, to see if it can be processed with
+  // tesseract. If it can not, reduce the depth and grayscale it.
+  $identify = islandora_ocr_get_identify();
+
+  $file = drupal_realpath($source_file);
+
+  $depth = intval(exec(escapeshellcmd("$identify -format \"%z\" $file")));
+  $codec = strtolower(exec(escapeshellcmd("$identify -format \"%m\" $file")));
+
+  // XXX: Likely an incomplete list... Cursory search didn't turn up a full
+  // list.
+  $supported_codecs = array(
+    'jpeg',
+    'tiff',
+    'png',
+  );
+
+  if ($depth > 8 || !in_array($codec, $supported_codecs)) {
+    $c_dest = file_create_filename(drupal_basename($source_file) . ".tif", 'temporary://');
+
+    $c_args = array(
+      '-colorspace Gray',
+      '-depth 8',
+      '-compress None',
+    );
+
+    $old_source = $source_file;
+    $source_file = islandora_ocr_imagemagick_convert($source_file, $c_dest, $c_args);
+    drupal_unlink($old_source);
+  }
+
+  return $source_file;
+}
+
+/**
+ * Derive the OCR stream from OBJ.
+ */
+function islandora_ocr_derive_ocr(AbstractObject $object, $force = FALSE) {
+  // Logic for OCR generation from islandora_book_batch.
+  $generate_ocr = 'TRUE';
+  $batch_ocr = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr');
+  if ($batch_ocr) {
+    $generate_ocr = $batch_ocr[0]['object']['value'];
+  }
+
+  if ($generate_ocr == 'TRUE' && ($force || !isset($object['OCR']))) {
+    $to_return = array(
+      'success' => FALSE,
+      'messages' => array(),
+    );
+
+    $datastream = $object['OBJ'];
+    $file = islandora_ocr_get_converted_source($datastream);
+    $ocr_file = islandora_ocr_create_ocr($file, array('language' => 'eng'));
+    if ($ocr_file && islandora_ocr_update_datastream($object, $ocr_file, 'OCR')) {
+      $to_return['success'] = TRUE;
+      $to_return['messages'][] = array(
+        'message' => t('Added @dsid to @id.'),
+        'message_sub' => array(
+          '@dsid' => 'OCR',
+          '@id' => $object->id,
+        ),
+        'type' => 'dsm',
+        'severity' => 'status',
+      );
+    }
+    else {
+      $to_return['messages'][] = array(
+        'message' => t('Failed to generate @dest_dsid from @src_dsid for @id.'),
+        'message_sub' => array(
+          '@dest_dsid' => 'OCR',
+          '@src_dsid' => 'OBJ',
+          '@id' => $object->id,
+        ),
+        'type' => 'watchdog',
+        'severity' => WATCHDOG_ERROR,
+      );
+    }
+
+    return $to_return;
+  }
+}
+
+/**
+ * Derive the HOCR stream from OBJ.
+ */
+function islandora_ocr_derive_hocr(AbstractObject $object, $force = FALSE) {
+  // Logic for OCR generation from islandora_book_batch.
+  $generate_ocr = 'TRUE';
+  $batch_ocr = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr');
+  if ($batch_ocr) {
+    $generate_ocr = $batch_ocr[0]['object']['value'];
+  }
+
+  if ($generate_ocr == 'TRUE' && ($force || !isset($object['HOCR']))) {
+    $to_return = array(
+      'success' => FALSE,
+      'messages' => array(),
+    );
+
+    $datastream = $object['OBJ'];
+    $file = islandora_ocr_get_converted_source($datastream);
+    $ocr_file = islandora_ocr_create_hocr($file, array('language' => 'eng'));
+    if ($ocr_file && islandora_ocr_update_datastream($object, $ocr_file, 'HOCR')) {
+      $to_return['success'] = TRUE;
+      $to_return['messages'][] = array(
+        'message' => t('Added @dsid to @id.'),
+        'message_sub' => array(
+          '@dsid' => 'HOCR',
+          '@id' => $object->id,
+        ),
+        'type' => 'dsm',
+        'severity' => 'status',
+      );
+    }
+    else {
+      $to_return['messages'][] = array(
+        'message' => t('Failed to generate @dest_dsid from @src_dsid for @id.'),
+        'message_sub' => array(
+          '@dest_dsid' => 'OCR',
+          '@src_dsid' => 'OBJ',
+          '@id' => $object->id,
+        ),
+        'type' => 'watchdog',
+        'severity' => WATCHDOG_ERROR,
+      );
+    }
+
+    return $to_return;
+  }
+}
+
+/**
  * Attempt to get the "identify" executable...
  *
  * Assume convert is sanely named, and that identify can be obtained from the
@@ -163,10 +316,10 @@ function islandora_ocr_derive_datastreams(FedoraDatastream $datastream, array $o
  *   The command to run for "identify".
  */
 function islandora_ocr_get_identify() {
-  // Get path for convert
+  // Get path for convert.
   $convert = variable_get('imagemagick_convert', 'convert');
 
-  // Replace "convert" with "identify"
+  // Replace "convert" with "identify".
   $identify = str_replace('convert', 'identify', $convert);
 
   return $identify;
@@ -179,10 +332,10 @@ function islandora_ocr_get_identify() {
  *   The source file uri to convert from.
  * @param string $dest
  *   The destination file uri to convert into.
- * @param int $width
- *   The source file to convert from.
- * @param int $height
- *   The destination file to convert into.
+ * @param array $args
+ *   The arguements to pass to imagemagik
+ *
+ * @todo add better documentation for the args parameter
  *
  * @return string
  *   The destination file path if successful otherwise FALSE.
@@ -195,16 +348,19 @@ function islandora_ocr_imagemagick_convert($src, $dest, $args) {
     'destination' => $dest,
   );
   drupal_alter('imagemagick_arguments', $args, $context);
-  /**
-   * To make use of ImageMagick 6's parenthetical command grouping we need to make the $source image the first parameter and $dest the last.
-   * See http://www.imagemagick.org/Usage/basics/#cmdline
-   */
+  // To make use of ImageMagick 6's parenthetical command grouping we need to
+  // make the $source image the first parameter and $dest the last.
+  // See http://www.imagemagick.org/Usage/basics/#cmdline
   $command = escapeshellarg($src) . ' ' . implode(' ', $args) . ' ' . escapeshellarg($dest);
   $output = '';
   $ret = -1;
   if (_imagemagick_convert_exec($command, $output, $ret) !== TRUE) {
     $message = 'ImageMagick failed to create a derivative.<br/>Error: @ret<br/>Command: @command<br/>Output: @output';
-    $variables = array('@ret' => $ret, '@command' => $command, '@output' => $output);
+    $variables = array(
+      '@ret' => $ret,
+      '@command' => $command,
+      '@output' => $output,
+    );
     watchdog('islandora_ocr', $message, $variables, WATCHDOG_ERROR);
     return FALSE;
   }
@@ -214,7 +370,7 @@ function islandora_ocr_imagemagick_convert($src, $dest, $args) {
 /**
  * Create/Update a datastream with the given parameters.
  *
- * @param AbstractFedoraObject $object
+ * @param AbstractObject $object
  *   The object to update.
  * @param string $file
  *   The absolute path to the file to use as content for the datastream.
@@ -231,7 +387,7 @@ function islandora_ocr_imagemagick_convert($src, $dest, $args) {
  * @return bool
  *   TRUE if successful, FALSE otherwise.
  */
-function islandora_ocr_update_datastream(AbstractFedoraObject $object, $file, $dsid, $label = NULL, $mimetype = NULL, $control_group = 'M', $copy = TRUE) {
+function islandora_ocr_update_datastream(AbstractObject $object, $file, $dsid, $label = NULL, $mimetype = NULL, $control_group = 'M', $copy = TRUE) {
   $mime_detector = new MimeDetect();
   if (empty($object[$dsid])) {
     $ds = $object->constructDatastream($dsid, $control_group);
@@ -250,4 +406,3 @@ function islandora_ocr_update_datastream(AbstractFedoraObject $object, $file, $d
   }
   return TRUE;
 }
-
