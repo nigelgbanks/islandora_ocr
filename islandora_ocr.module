@@ -5,8 +5,19 @@
  * Defines all the hooks this module implements.
  */
 
+$tesseract_required_version_number = '3.02.02';
+
+// Determine if the server is running Windows.
+if (islandora_os_check() == "Windows") {
+  // For some reason, the Windows version of Tesseract identifies itself
+  // incorrectly. Despite downloading and installing the "3.02.02" version,
+  // running "tesseract -v" gives the incorrect response "tesseract 3.02".
+  // This hack makes it possible to still use OCR under Windows.
+  $tesseract_required_version_number = '3.02';
+}
+
 // Constants.
-define('ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION', '3.02.02');
+define('ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION', $tesseract_required_version_number);
 
 /**
  * Implements hook_menu().
