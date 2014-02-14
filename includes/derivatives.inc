@@ -252,7 +252,7 @@ function islandora_ocr_derive_ocr(AbstractObject $object, $force = FALSE) {
         'severity' => WATCHDOG_ERROR,
       );
     }
-
+    file_unmanaged_delete($file);
     return $to_return;
   }
 }
@@ -301,7 +301,8 @@ function islandora_ocr_derive_hocr(AbstractObject $object, $force = FALSE) {
         'severity' => WATCHDOG_ERROR,
       );
     }
-
+    // Clean up.
+    file_unmanaged_delete($file);
     return $to_return;
   }
 }
@@ -404,5 +405,6 @@ function islandora_ocr_update_datastream(AbstractObject $object, $file, $dsid, $
   else {
     $ds->mimetype = $mime_detector->getMimetype($file);
   }
+  file_unmanaged_delete($file);
   return TRUE;
 }
