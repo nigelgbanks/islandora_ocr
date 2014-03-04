@@ -408,3 +408,16 @@ function islandora_ocr_update_datastream(AbstractObject $object, $file, $dsid, $
   file_unmanaged_delete($file);
   return TRUE;
 }
+
+/**
+ * Remove the generate_ocr field if present in the RELS-EXT.
+ */
+function islandora_ocr_remove_generate_ocr_rels_ext_statement(AbstractObject $object, $force = FALSE) {
+  if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr', '', TRUE)) {
+    $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'generate_ocr', '', TRUE);
+  }
+  return array(
+    'success' => FALSE,
+    'messages' => array(),
+  );
+}
