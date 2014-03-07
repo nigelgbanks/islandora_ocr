@@ -9,10 +9,9 @@ module_load_include('inc', 'islandora', 'includes/utilities');
 
 $tesseract_required_version_number = '3.02.02';
 
-// Determine if the server's operating system is Windows.
 if (islandora_deployed_on_windows()) {
-  // slangerx: For some reason, Tesseract 3.02.02 for Windows
-  // identifies itself incorrectly: "tesseract -v" = "tesseract 3.02"
+  // For some reason, Tesseract 3.02.02 for Windows identifies
+  // itself incorrectly: "tesseract -v" returns "tesseract 3.02"
   // This hack makes it possible to still use OCR under Windows.
   $tesseract_required_version_number = '3.02';
 }
