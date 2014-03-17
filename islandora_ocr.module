@@ -26,7 +26,7 @@ function islandora_ocr_menu() {
 }
 
 /**
- * Get the required Tesseract version number, based on server OS.
+ * Returns the appropriate Tesseract version number, based on server OS.
  *
  * @return string
  *   The Tesseract version number.
