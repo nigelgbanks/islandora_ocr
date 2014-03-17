@@ -5,7 +5,7 @@
  * Defines all the hooks this module implements.
  */
 
-// Constants.
+// Constant.
 define('ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION', islandora_ocr_tesseract_version_number());
 
 /**
@@ -29,7 +29,7 @@ function islandora_ocr_menu() {
  * Get the required Tesseract version number, based on server OS.
  *
  * @return string
- *   The Tesseract version number required by this module.
+ *   The Tesseract version number.
  */
 function islandora_ocr_tesseract_version_number() {
   module_load_include('inc', 'islandora', 'includes/utilities');
