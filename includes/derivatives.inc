@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * File to create derivatives with teseract
@@ -20,7 +21,8 @@ function islandora_ocr_create_ocr($image_file, array $options) {
   $image_file = drupal_realpath($image_file);
   $out_file = "$image_file.txt";
   $executable = variable_get('islandora_ocr_tesseract', '/usr/bin/tesseract');
-  $output = array(); $ret = 0;
+  $output = array();
+  $ret = 0;
   $command = "{$executable} {$image_file} {$image_file} -l {$options['language']} 2>&1";
   exec($command, $output, $ret);
   if ($ret != '0' || !file_exists($out_file)) {
@@ -52,7 +54,8 @@ function islandora_ocr_create_hocr($image_file, array $options) {
   $image_file = drupal_realpath($image_file);
   $out_file = "$image_file.html";
   $executable = variable_get('islandora_ocr_tesseract', '/usr/bin/tesseract');
-  $output = array(); $ret = 0;
+  $output = array();
+  $ret = 0;
   $command = "{$executable} {$image_file} {$image_file} -l {$options['language']} hocr 2>&1";
   exec($command, $output, $ret);
   if ($ret != '0' || !file_exists($out_file)) {
@@ -212,6 +215,21 @@ function islandora_ocr_get_converted_source(AbstractDatastream $datastream) {
  * Derive the OCR stream from OBJ.
  */
 function islandora_ocr_derive_ocr(AbstractObject $object, $force = FALSE) {
+  $language_array = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'hasLanguage');
+  $language = isset($language_array[0]['object']['value']) ? $language_array[0]['object']['value'] : 'eng';
+  if ($language == 'no_ocr') {
+    $to_return['success'] = TRUE;
+    $to_return['messages'][] = array(
+      'message' => t('Skipped adding @dsid to @id.'),
+      'message_sub' => array(
+        '@dsid' => 'OCR',
+        '@id' => $object->id,
+      ),
+      'type' => 'dsm',
+      'severity' => 'status',
+    );
+    return $to_return;
+  }
   // Logic for OCR generation from islandora_book_batch.
   $generate_ocr = 'TRUE';
   $batch_ocr = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr');
@@ -227,7 +245,7 @@ function islandora_ocr_derive_ocr(AbstractObject $object, $force = FALSE) {
 
     $datastream = $object['OBJ'];
     $file = islandora_ocr_get_converted_source($datastream);
-    $ocr_file = islandora_ocr_create_ocr($file, array('language' => 'eng'));
+    $ocr_file = islandora_ocr_create_ocr($file, array('language' => $language));
     if ($ocr_file && islandora_ocr_update_datastream($object, $ocr_file, 'OCR')) {
       $to_return['success'] = TRUE;
       $to_return['messages'][] = array(
@@ -261,6 +279,21 @@ function islandora_ocr_derive_ocr(AbstractObject $object, $force = FALSE) {
  * Derive the HOCR stream from OBJ.
  */
 function islandora_ocr_derive_hocr(AbstractObject $object, $force = FALSE) {
+  $language_array = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'hasLanguage');
+  $language = isset($language_array[0]['object']['value']) ? $language_array[0]['object']['value'] : 'eng';
+  if ($language == 'no_ocr') {
+    $to_return['success'] = TRUE;
+    $to_return['messages'][] = array(
+      'message' => t('Skipped adding @dsid to @id.'),
+      'message_sub' => array(
+        '@dsid' => 'HOCR',
+        '@id' => $object->id,
+      ),
+      'type' => 'dsm',
+      'severity' => 'status',
+    );
+    return $to_return;
+  }
   // Logic for OCR generation from islandora_book_batch.
   $generate_ocr = 'TRUE';
   $batch_ocr = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr');
@@ -276,7 +309,7 @@ function islandora_ocr_derive_hocr(AbstractObject $object, $force = FALSE) {
 
     $datastream = $object['OBJ'];
     $file = islandora_ocr_get_converted_source($datastream);
-    $ocr_file = islandora_ocr_create_hocr($file, array('language' => 'eng'));
+    $ocr_file = islandora_ocr_create_hocr($file, array('language' => $language));
     if ($ocr_file && islandora_ocr_update_datastream($object, $ocr_file, 'HOCR')) {
       $to_return['success'] = TRUE;
       $to_return['messages'][] = array(
