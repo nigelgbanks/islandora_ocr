@@ -5,8 +5,8 @@
  * Defines all the hooks this module implements.
  */
 
-// Constant.
-define('ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION', islandora_ocr_tesseract_version_number());
+// Constants.
+define('ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION', '3.02.02'); // deprecated
 
 /**
  * Implements hook_menu().
@@ -23,25 +23,4 @@ function islandora_ocr_menu() {
       'type' => MENU_NORMAL_ITEM,
     ),
   );
-}
-
-/**
- * Returns the appropriate Tesseract version number, based on server OS.
- *
- * @return string
- *   The Tesseract version number.
- */
-function islandora_ocr_tesseract_version_number() {
-  module_load_include('inc', 'islandora', 'includes/utilities');
-
-  $tesseract_required_version_number = '3.02.02';
-
-  if (islandora_deployed_on_windows()) {
-    // For some reason, Tesseract 3.02.02 for Windows identifies itself
-    // incorrectly: "tesseract -v" returns "tesseract 3.02". Adjusting
-    // the version number allows Windows installations to use OCR again.
-    $tesseract_required_version_number = '3.02';
-  }
-
-  return $tesseract_required_version_number;
 }
