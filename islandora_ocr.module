@@ -5,8 +5,8 @@
  * Defines all the hooks this module implements.
  */
 
-// Constants.
-define('ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION', '3.02.02'); // deprecated
+// Constant (deprecated)
+define('ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION', '3.02.02');
 
 /**
  * Implements hook_menu().
