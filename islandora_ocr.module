@@ -5,7 +5,7 @@
  * Defines all the hooks this module implements.
  */
 
-// Constants.
+// Constant (deprecated).
 define('ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION', '3.02.02');
 
 /**
