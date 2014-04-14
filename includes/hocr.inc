@@ -56,9 +56,10 @@ class HOCR {
    *   TRUE if the HOCR file is valid, FALSE otherwise.
    */
   public static function isValid($file) {
+    module_load_include('inc', 'islandora_ocr', 'includes/utilities');
     if (file_exists($file)) {
       $version = self::getVersion($file);
-      return version_compare($version, ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION) >= 0;
+      return version_compare($version, islandora_ocr_required_tesseract_version()) >= 0;
     }
     return FALSE;
   }

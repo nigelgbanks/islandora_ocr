@@ -270,7 +270,7 @@ function islandora_ocr_derive_ocr(AbstractObject $object, $force = FALSE) {
         'severity' => WATCHDOG_ERROR,
       );
     }
-
+    file_unmanaged_delete($file);
     return $to_return;
   }
 }
@@ -334,7 +334,8 @@ function islandora_ocr_derive_hocr(AbstractObject $object, $force = FALSE) {
         'severity' => WATCHDOG_ERROR,
       );
     }
-
+    // Clean up.
+    file_unmanaged_delete($file);
     return $to_return;
   }
 }
@@ -437,5 +438,19 @@ function islandora_ocr_update_datastream(AbstractObject $object, $file, $dsid, $
   else {
     $ds->mimetype = $mime_detector->getMimetype($file);
   }
+  file_unmanaged_delete($file);
   return TRUE;
+}
+
+/**
+ * Remove the generate_ocr field if present in the RELS-EXT.
+ */
+function islandora_ocr_remove_generate_ocr_rels_ext_statement(AbstractObject $object, $force = FALSE) {
+  if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr', '', RELS_TYPE_STRING)) {
+    $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'generate_ocr', '', RELS_TYPE_STRING);
+  }
+  return array(
+    'success' => FALSE,
+    'messages' => array(),
+  );
 }
