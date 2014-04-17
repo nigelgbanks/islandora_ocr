@@ -77,8 +77,8 @@ https://github.com/discoverygarden/basic-solr-config/blob/modular/islandora_tran
 CONFIGURATION
 -------------
 
-The Solr field for used for highlighting can be configured at 
-admin/islandora/ocr.
+The Solr field for used for highlighting can be configured at
+admin/islandora/tools/ocr.
 
 Tesseract:
 
