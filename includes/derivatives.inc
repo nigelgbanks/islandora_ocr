@@ -336,6 +336,7 @@ function islandora_ocr_derive_hocr(AbstractObject $object, $force = FALSE) {
     }
     // Clean up.
     file_unmanaged_delete($file);
+    islandora_ocr_remove_generate_ocr_rels_ext_statement($object);
     return $to_return;
   }
 }
