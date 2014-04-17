@@ -445,12 +445,15 @@ function islandora_ocr_update_datastream(AbstractObject $object, $file, $dsid, $
 /**
  * Remove the generate_ocr field if present in the RELS-EXT.
  */
-function islandora_ocr_remove_generate_ocr_rels_ext_statement(AbstractObject $object, $force = FALSE) {
-  if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr', '', RELS_TYPE_STRING)) {
-    $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'generate_ocr', '', RELS_TYPE_STRING);
+function islandora_ocr_remove_generate_ocr_rels_ext_statement(AbstractObject $object) {
+  if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr', '', RELS_TYPE_PLAIN_LITERAL)) {
+    $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'generate_ocr', '', RELS_TYPE_PLAIN_LITERAL);
   }
-  return array(
-    'success' => FALSE,
-    'messages' => array(),
-  );
+}
+
+/**
+ * Set the generate_ocr relation in the RELS-EXT.
+ */
+function islandora_ocr_set_generate_ocr_rels_ext_statement(AbstractObject $object) {
+  $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'generate_ocr', 'TRUE', RELS_TYPE_PLAIN_LITERAL);
 }
