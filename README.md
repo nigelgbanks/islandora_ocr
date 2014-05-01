@@ -28,15 +28,15 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 ## Configuration
 
-Set the path for Tesseract, select languages available for OCR, enable/disable Solr Fast Vector Highlighting, and set Solr field containing OCR text and the maximum number of results to return in a Solr query in Administration » Islandora » OCR Tool (admin/islandora/ocr).
+Set the path for Tesseract, select languages available for OCR, enable/disable Solr Fast Vector Highlighting, and set Solr field containing OCR text and the maximum number of results to return in a Solr query in Administration » Islandora » Islandora Utility Modules » OCR Tool (admin/islandora/tools/ocr).
 
-![Configuration](http://i.imgur.com/8UBJvUc.png)
+![Configuration](https://camo.githubusercontent.com/0c1fd39bad0200eb1bb0ed36ae761dfe50665ba6/687474703a2f2f692e696d6775722e636f6d2f4c386e704f61502e706e67)
 
 ### Solr result highlighting
 
 To have Islandora viewers recognize Solr search results and highlight them one will need to configure Solr to index the HOCR in a particular fashion.
 
-The field that the HOCR is stored in must have the following attributes:  `indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true"`
+The field that the HOCR is stored in must have the following attributes: `indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true"`
 
 Each text node of each element in the HOCR datastream must be placed in order in a single value for the Solr field with all whitespace sub strings normalized to a single space.
 

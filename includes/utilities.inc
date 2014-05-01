@@ -13,7 +13,7 @@
  */
 function islandora_ocr_can_derive_ocr() {
   $version = islandora_ocr_get_tesseract_version();
-  return version_compare($version, ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION) >= 0;
+  return version_compare($version, islandora_ocr_required_tesseract_version()) >= 0;
 }
 
 /**
@@ -38,6 +38,27 @@ function islandora_ocr_get_tesseract_version($tesseract = NULL) {
     }
   }
   return FALSE;
+}
+
+/**
+ * Returns the Tesseract version number required, based on server OS.
+ *
+ * @return string
+ *   The required Tesseract version number.
+ */
+function islandora_ocr_required_tesseract_version() {
+  module_load_include('inc', 'islandora', 'includes/utilities');
+
+  $tesseract_required_version_number = '3.02.02';
+
+  if (islandora_deployed_on_windows()) {
+    // For some reason, Tesseract 3.02.02 for Windows identifies itself
+    // incorrectly: "tesseract -v" returns "tesseract 3.02". Adjusting
+    // the version number allows Windows installations to use OCR again.
+    $tesseract_required_version_number = '3.02';
+  }
+
+  return $tesseract_required_version_number;
 }
 
 /**
@@ -99,5 +120,5 @@ function islandora_ocr_tesseract_language_name($language) {
  */
 function islandora_ocr_get_enabled_tesseract_languages() {
   $enabled_languages = array_filter(variable_get('islandora_ocr_tesseract_enabled_languages'));
-  return drupal_map_assoc($enabled_languages, 'islandora_ocr_tesseract_language_name');
+  return array_merge(drupal_map_assoc($enabled_languages, 'islandora_ocr_tesseract_language_name'), array('no_ocr' => t('Do not perform OCR')));
 }

@@ -5,7 +5,7 @@
  * Defines all the hooks this module implements.
  */
 
-// Constants.
+// Constant (deprecated).
 define('ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION', '3.02.02');
 
 /**
@@ -13,7 +13,7 @@ define('ISLANDORA_OCR_TESSERACT_REQUIRED_VERSION', '3.02.02');
  */
 function islandora_ocr_menu() {
   return array(
-    'admin/islandora/ocr' => array(
+    'admin/islandora/tools/ocr' => array(
       'title' => 'OCR Tool',
       'description' => 'Configure OCR generation.',
       'page callback' => 'drupal_get_form',

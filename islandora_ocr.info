@@ -1,6 +1,6 @@
 name = "Islandora OCR"
 description = "Generate/parse OCR and word coordinate data from images."
-package = Islandora
+package = Islandora Tools
 dependencies[] = islandora
 version = 7.x-dev
 core = 7.x
