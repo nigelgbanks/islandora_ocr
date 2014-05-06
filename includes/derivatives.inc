@@ -64,7 +64,7 @@ function islandora_ocr_create_hocr($image_file, array $options) {
     // Add .html extension so we get correct mimetype.
     $out_file = file_unmanaged_move("$image_file.hocr", "temporary://$base_name.html", FILE_EXISTS_REPLACE);
   }
-  if ($ret != '0' || !file_exists($out_file)) {
+  if ($ret != '0' || empty($out_file) || !file_exists($out_file)) {
     $message = 'Tesseract failed to create an HOCR datastream.<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
     $variables = array(
       '@ret' => $ret,
