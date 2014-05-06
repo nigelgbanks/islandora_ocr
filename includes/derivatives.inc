@@ -58,6 +58,12 @@ function islandora_ocr_create_hocr($image_file, array $options) {
   $ret = 0;
   $command = "{$executable} {$image_file} {$image_file} -l {$options['language']} hocr 2>&1";
   exec($command, $output, $ret);
+  $version = islandora_ocr_get_tesseract_version($executable);
+  if (strcmp($version, "3.02.02") > 0) {
+    $base_name = drupal_basename("$image_file.hocr");
+    // Add .html extension so we get correct mimetype.
+    $out_file = file_unmanaged_move("$image_file.hocr", "temporary://$base_name.html", FILE_EXISTS_REPLACE);
+  }
   if ($ret != '0' || !file_exists($out_file)) {
     $message = 'Tesseract failed to create an HOCR datastream.<br/>Error: @ret<br/>Command: @command<br/>Output: !output';
     $variables = array(
