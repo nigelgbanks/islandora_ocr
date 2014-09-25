@@ -6,11 +6,11 @@ This module acts a Toolkit for generating OCR and word coordinate information. A
 
 ### Tesseract
 
-Tesseract is an OCR engine that was developed at HP Labs between 1985 and 1995 it is currently being developed at Google. Recognized as one of the most accurate open source OCR engines available, Tesseract will read binary, grey, or colour images and output text.
+Tesseract is an OCR engine that was developed at HP Labs between 1985 and 1995. It is currently being developed at Google. Recognized as one of the most accurate open source OCR engines available, Tesseract will read binary, grey, or colour images and output text.
 
 A TIFF reader that will read uncompressed TIFF images is also included. Islandora Book Solution Pack currently uses Tesseract version 3.2.2, which can be obtained from the project home page. Lower versions are not supported.
 
-## Rquirements
+## Requirements
 
 This module requires the following modules/libraries:
 
@@ -28,13 +28,18 @@ Install as usual, see [this](https://drupal.org/documentation/install/modules-th
 
 ## Configuration
 
-Set the path for Tesseract, select languages available for OCR, enable/disable Solr Fast Vector Highlighting, and set Solr field containing OCR text and the maximum number of results to return in a Solr query in Administration » Islandora » Islandora Utility Modules » OCR Tool (admin/islandora/tools/ocr).
+In Administration » Islandora » Islandora Utility Modules » OCR Tool (admin/islandora/tools/ocr), configure the following:
+
+* Set the path for Tesseract
+* Select languages available for OCR
+* Enable/disable Solr Fast Vector Highlighting
+* Set Solr field containing OCR text and the maximum number of results to return in a Solr query
 
 ![Configuration](https://camo.githubusercontent.com/0c1fd39bad0200eb1bb0ed36ae761dfe50665ba6/687474703a2f2f692e696d6775722e636f6d2f4c386e704f61502e706e67)
 
 ### Solr result highlighting
 
-To have Islandora viewers recognize Solr search results and highlight them one will need to configure Solr to index the HOCR in a particular fashion.
+To have Islandora viewers recognize Solr search results and highlight them, one will need to configure Solr to index the HOCR in a particular fashion.
 
 The field that the HOCR is stored in must have the following attributes: `indexed="true" stored="true" termVectors="true" termPositions="true" termOffsets="true"`
 
