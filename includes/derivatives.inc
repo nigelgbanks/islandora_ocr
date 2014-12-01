@@ -461,6 +461,7 @@ function islandora_ocr_remove_generate_ocr_rels_ext_statement(AbstractObject $ob
 /**
  * Set the generate_ocr relation in the RELS-EXT.
  */
-function islandora_ocr_set_generate_ocr_rels_ext_statement(AbstractObject $object, $value = 'TRUE') {
-  $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'generate_ocr', $value, RELS_TYPE_PLAIN_LITERAL);
+function islandora_ocr_set_generate_ocr_rels_ext_statement(AbstractObject $object, $generate_ocr = TRUE) {
+  $generate_ocr = $generate_ocr ? 'TRUE' : 'FALSE';
+  $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'generate_ocr', $generate_ocr, RELS_TYPE_PLAIN_LITERAL);
 }
