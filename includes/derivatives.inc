@@ -223,7 +223,13 @@ function islandora_ocr_get_converted_source(AbstractDatastream $datastream) {
 function islandora_ocr_derive_ocr(AbstractObject $object, $force = FALSE) {
   $language_array = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'hasLanguage');
   $language = isset($language_array[0]['object']['value']) ? $language_array[0]['object']['value'] : 'eng';
-  if ($language == 'no_ocr') {
+  // Logic for OCR generation from islandora_book_batch.
+  $generate_ocr = 'TRUE';
+  $batch_ocr = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr');
+  if ($batch_ocr) {
+    $generate_ocr = $batch_ocr[0]['object']['value'];
+  }
+  if ($language == 'no_ocr' || $generate_ocr == 'FALSE') {
     $to_return['success'] = TRUE;
     $to_return['messages'][] = array(
       'message' => t('Skipped adding @dsid to @id.'),
@@ -235,12 +241,6 @@ function islandora_ocr_derive_ocr(AbstractObject $object, $force = FALSE) {
       'severity' => 'status',
     );
     return $to_return;
-  }
-  // Logic for OCR generation from islandora_book_batch.
-  $generate_ocr = 'TRUE';
-  $batch_ocr = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr');
-  if ($batch_ocr) {
-    $generate_ocr = $batch_ocr[0]['object']['value'];
   }
 
   if ($generate_ocr == 'TRUE' && ($force || !isset($object['OCR']))) {
@@ -286,8 +286,14 @@ function islandora_ocr_derive_ocr(AbstractObject $object, $force = FALSE) {
  */
 function islandora_ocr_derive_hocr(AbstractObject $object, $force = FALSE) {
   $language_array = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'hasLanguage');
+  // Logic for OCR generation from islandora_book_batch.
+  $generate_ocr = 'TRUE';
+  $batch_ocr = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr');
+  if ($batch_ocr) {
+    $generate_ocr = $batch_ocr[0]['object']['value'];
+  }
   $language = isset($language_array[0]['object']['value']) ? $language_array[0]['object']['value'] : 'eng';
-  if ($language == 'no_ocr') {
+  if ($language == 'no_ocr' || $generate_ocr == 'FALSE') {
     $to_return['success'] = TRUE;
     $to_return['messages'][] = array(
       'message' => t('Skipped adding @dsid to @id.'),
@@ -300,13 +306,6 @@ function islandora_ocr_derive_hocr(AbstractObject $object, $force = FALSE) {
     );
     return $to_return;
   }
-  // Logic for OCR generation from islandora_book_batch.
-  $generate_ocr = 'TRUE';
-  $batch_ocr = $object->relationships->get(ISLANDORA_RELS_EXT_URI, 'generate_ocr');
-  if ($batch_ocr) {
-    $generate_ocr = $batch_ocr[0]['object']['value'];
-  }
-
   if ($generate_ocr == 'TRUE' && ($force || !isset($object['HOCR']))) {
     $to_return = array(
       'success' => FALSE,
