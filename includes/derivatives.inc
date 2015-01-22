@@ -431,7 +431,6 @@ function islandora_ocr_update_datastream(AbstractObject $object, $file, $dsid, $
   $mime_detector = new MimeDetect();
   if (empty($object[$dsid])) {
     $ds = $object->constructDatastream($dsid, $control_group);
-    $object->ingestDatastream($ds);
   }
   else {
     $ds = $object[$dsid];
@@ -444,6 +443,7 @@ function islandora_ocr_update_datastream(AbstractObject $object, $file, $dsid, $
   else {
     $ds->mimetype = $mime_detector->getMimetype($file);
   }
+  $object->ingestDatastream($ds);
   file_unmanaged_delete($file);
   return TRUE;
 }
